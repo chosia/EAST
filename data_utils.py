@@ -15,7 +15,7 @@ from shapely.geometry import Polygon
 from PIL import Image
 import warnings
 from geo_map_cython_lib import gen_geo_map
-
+import traceback
 
 
 
@@ -61,11 +61,11 @@ def load_annoataion(p):
     text_tags = []
     if not os.path.exists(p):
         return np.array(text_polys, dtype=np.float32)
-    with open(p, 'r') as f:
+    with open(p, 'r', encoding='utf-8-sig') as f:
         reader = csv.reader(f)
         for line in reader: 
             label = line[-1]# strip BOM. \ufeff for python3,  \xef\xbb\bf for python2 
-            line = [i.strip('\ufeff').strip('\xef\xbb\xbf') for i in line] 
+#            line = [i.strip('\ufeff').strip('\xef\xbb\xbf') for i in line] 
             x1, y1, x2, y2, x3, y3, x4, y4 = list(map(int, line[:8])) 
             text_polys.append([[x1, y1], [x2, y2], [x3, y3], [x4, y4]])
             if label == '*' or label == '###':
@@ -914,6 +914,8 @@ def image_label(txt_root,
     
     except Exception as e:
         print('Exception continue')
+        print(e)
+        print(traceback.format_exc())
         return None, None,None,None
 
     images = im[:, :, ::-1].astype(np.float32)
@@ -971,9 +973,9 @@ class custom_dset(data.Dataset):
         for i in range(len(self.img_path_list)):
             img_id = []
             img_id.append(os.path.basename(self.img_path_list[i]).strip('.jpg'))
-            img_id.append(os.path.basename(self.txt_path_list[i]).strip('.txt'))
+            img_id.append(os.path.basename(self.txt_path_list[i]).strip('.txt').strip('gt_'))
             img_id.append(self.img_name_list[i].strip('.jpg'))
-            img_id.append(self.txt_name_list[i].strip('.txt'))
+            img_id.append(self.txt_name_list[i].strip('.txt').strip('gt_'))
             if (img_id[0] == img_id[1])&(img_id[2] == img_id[3])&(img_id[0] == img_id[2]):
                 continue
             else:
